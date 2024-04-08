@@ -1,21 +1,14 @@
 import datetime
 
 from sqlalchemy import Integer, BigInteger, func
-from sqlalchemy.orm import as_declarative, declared_attr, Mapped, mapped_column
+from sqlalchemy.orm import as_declarative, declared_attr, Mapped, mapped_column, DeclarativeBase
 
 
-@as_declarative()
-class AbstractModel:
-    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
-
-    # Называет таблицы как классы
-    @classmethod
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
+class Base(DeclarativeBase):
+    pass
 
 
-class User(AbstractModel):
+class User(Base):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
 

@@ -17,7 +17,7 @@ async def main():
 
     logging.basicConfig(
         level=logging.INFO,
-        # filename='data/errors.log',
+        filename='data/errors.log',
         format="%(asctime)s - %(name)s - %(message)s",
     )
 
