@@ -16,8 +16,8 @@ load_dotenv()
 async def main():
 
     logging.basicConfig(
-        level=logging.ERROR,
-        filename='data/errors.log',
+        level=logging.INFO,
+        # filename='data/errors.log',
         format="%(asctime)s - %(name)s - %(message)s",
     )
 
