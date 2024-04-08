@@ -1,0 +1,96 @@
+import asyncio
+import operator
+import os
+import aiohttp
+from pprint import pprint
+
+import requests
+
+
+async def get_balance_jettons(wallet_address: str):
+    api_key = os.getenv('API_KEY')
+
+    url = f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd'
+    url_ton = f'https://tonapi.io/v2/accounts/{wallet_address}'
+    url_price_ton = 'https://tonapi.io/v2/rates?tokens=ton&currencies=usd'
+
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            jetton_wallet = await response.json()
+            await asyncio.sleep(.7)
+        async with session.get(url=url_ton, headers=headers) as response:
+            ton_wallet = await response.json()
+            await asyncio.sleep(.7)
+        async with session.get(url=url_price_ton, headers=headers) as response:
+            ton_price = await response.json()
+            await asyncio.sleep(.7)
+    # pprint(jetton_wallet)
+    try:
+        value_usd = int(ton_wallet['balance']) / 1000000000 * ton_price['rates']['TON']['prices']['USD']
+        diff_24h_usd = float(ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0])
+
+        list_jetton = [{
+            'jetton_name': 'TON',
+            'balance': int(ton_wallet['balance']) / 1000000000,
+            'price_usd': ton_price['rates']['TON']['prices']['USD'],
+            'value_usd': value_usd,
+            'diff_24h': {
+                'USD': ton_price['rates']['TON']['diff_24h']['USD']
+            },
+            'diff_24h_value': {
+                'USD': value_usd * diff_24h_usd / 100
+            }
+
+        }]
+        for resp in jetton_wallet['balances']:
+            if int(resp['balance']) != 0:
+
+                value = int(resp['balance']) / 1000000000 * resp['price']['prices']['USD']
+                if value > 0.05:
+                    diff_24h_ton = float(resp['price']['diff_24h']['TON'].split('%')[0])
+                    diff_24h_usd = float(resp['price']['diff_24h']['USD'].split('%')[0])
+
+                    value_ton = int(resp['balance']) / 1000000000 * resp['price']['prices']['TON']
+                    value_usd = int(resp['balance']) / 1000000000 * resp['price']['prices']['USD']
+
+                    list_jetton.append({
+                        'jetton_name': resp['jetton']['symbol'],
+                        'balance': int(resp['balance']) / 1000000000,
+                        'price_ton': resp['price']['prices']['TON'],
+                        'price_usd': resp['price']['prices']['USD'],
+                        'value_ton': value_ton,
+                        'value_usd': value_usd,
+                        'diff_24h': {
+                            'TON': resp['price']['diff_24h']['TON'],
+                            'USD': resp['price']['diff_24h']['USD']
+                        },
+                        'diff_24h_value': {
+                            'TON': value_ton * diff_24h_ton / 100,
+                            'USD': value_usd * diff_24h_usd / 100
+                        }
+                    })
+        return list_jetton
+    except KeyError:
+        pass
+
+
+async def check_address(address: str):
+    api_key = os.getenv('API_KEY')
+
+    url = f'https://tonapi.io/v2/address/{address}/parse'
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url) as response:
+            status = await response.json()
+            try:
+                error_status = status['error']
+                return False
+            except KeyError:
+                return True
