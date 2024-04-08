@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import Integer, BigInteger, func
-from sqlalchemy.orm import as_declarative, declared_attr, Mapped, mapped_column, DeclarativeBase
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
 
 class Base(DeclarativeBase):
@@ -12,6 +12,10 @@ class User(Base):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
 
+
+class User(Base):
+    __tablename__ = 'user'
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     username: Mapped[str] = mapped_column(unique=True)
     user_fullname: Mapped[str] = mapped_column()
