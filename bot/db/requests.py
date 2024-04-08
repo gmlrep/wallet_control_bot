@@ -1,8 +1,4 @@
-import asyncio
-import random
-
-from sqlalchemy import Integer, Column, String, BigInteger, ForeignKey, select, insert, or_, update, bindparam, \
-    delete, func, text, Row
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from bot.db.config import settings

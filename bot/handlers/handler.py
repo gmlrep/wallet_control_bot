@@ -1,19 +1,16 @@
 import asyncio
 import os
-from pprint import pprint
 
 import aiohttp
 import requests
 from aiogram import F, Router
-from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
 
-from bot.db.requests import create_profile, update_profile_addr, get_address, get_alert_status, update_profile_alert, \
-    get_list_alert_user
+from bot.db.requests import create_profile, update_profile_addr, get_address, update_profile_alert, get_list_alert_user
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings
 from bot.wallet_control import get_balance_jettons, check_address
 

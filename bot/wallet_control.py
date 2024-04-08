@@ -1,10 +1,6 @@
 import asyncio
-import operator
 import os
 import aiohttp
-from pprint import pprint
-
-import requests
 
 
 async def get_balance_jettons(wallet_address: str):
@@ -28,7 +24,6 @@ async def get_balance_jettons(wallet_address: str):
         async with session.get(url=url_price_ton, headers=headers) as response:
             ton_price = await response.json()
             await asyncio.sleep(.7)
-    # pprint(jetton_wallet)
     try:
         value_usd = int(ton_wallet['balance']) / 1000000000 * ton_price['rates']['TON']['prices']['USD']
         diff_24h_usd = float(ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0])

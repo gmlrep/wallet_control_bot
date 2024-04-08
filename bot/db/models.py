@@ -1,9 +1,7 @@
-import asyncio
 import datetime
 
-from sqlalchemy import create_engine, Integer, String, BigInteger, ForeignKey, func, Column
-from sqlalchemy.orm import Session, as_declarative, declared_attr, Mapped, mapped_column, sessionmaker, relationship, \
-    DeclarativeBase
+from sqlalchemy import Integer, BigInteger, func
+from sqlalchemy.orm import as_declarative, declared_attr, Mapped, mapped_column
 
 
 @as_declarative()

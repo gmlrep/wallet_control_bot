@@ -1,5 +1,3 @@
-import asyncio
-
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.db.requests import get_address, get_alert_status
@@ -42,10 +40,3 @@ async def kb_settings(user_id: int):
     settings.button(text="Назад", callback_data='back')
     settings.adjust(1, 1)
     return settings.as_markup()
-
-
-async def mai():
-    data = await get_alert_status(user_id=312390617)
-    print(data)
-
-# asyncio.run(mai())
