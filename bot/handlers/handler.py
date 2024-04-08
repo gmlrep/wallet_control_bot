@@ -41,7 +41,7 @@ async def start_handler(message: Message):
 @router.callback_query(F.data == 'add_wallet')
 async def add_wallet(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Address.address)
-    await callback.message.answer(text='Введите адрес кошелька, который хотите отслеживать')
+    await callback.message.answer(text='Введите адрес кошелька, который хотите отслеживать в сети TON.')
     await callback.answer()
 
 
@@ -54,7 +54,7 @@ async def set_address(message: Message, state: FSMContext):
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
         await state.clear()
     else:
-        await message.answer(text='Такого адреса не существует. Введите Корректный адрес.')
+        await message.answer(text='Такого адреса не существует. Введите корректный адрес.')
 
 
 @router.callback_query(F.data == 'list_addr')
