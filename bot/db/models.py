@@ -8,9 +8,9 @@ class Base(DeclarativeBase):
     pass
 
 
-class User(Base):
-    __tablename__ = 'user'
-    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+# class User(Base):
+#     __tablename__ = 'user'
+#     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
 
 
 class User(Base):

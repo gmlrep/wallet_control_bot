@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pprint import pprint
 
 import aiohttp
 import requests
@@ -156,3 +157,8 @@ async def send_alert_user():
                 text = await get_text_msg(wallet_address=addr)
                 url = f"https://api.telegram.org/bot{bot_token}/sendMessage?text={text}"
                 response = requests.post(url=url, json=data)
+
+
+# @router.message(F.text)
+# async def msg_hang(message: Message):
+#     pprint(message.from_user.language_code)
