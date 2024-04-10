@@ -9,6 +9,7 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
 from bot.db.requests import create_profile, update_profile_addr, get_address, update_profile_alert, get_list_alert_user
@@ -25,7 +26,11 @@ class Address(StatesGroup):
 
 
 @router.message(Command('start'))
-async def start_handler(message: Message):
+async def start_handler(message: Message, scheduler: AsyncIOScheduler):
+    ids = scheduler.get_job(job_id='send_msg')
+    if ids is None:
+        time = os.getenv("TIME").split(':')
+        scheduler.add_job(send_alert_user, 'cron', hour=time[0], minute=time[1], kwargs={'message': message}, id='send_msg')
     is_registered = await create_profile(user_id=message.from_user.id,
                                          user_fullname=message.from_user.full_name,
                                          username=message.from_user.username)
@@ -131,9 +136,9 @@ async def back_to_main(callback: CallbackQuery):
     await callback.answer()
 
 
-async def send_alert_user():
+async def send_alert_user(message: Message):
     users = await get_list_alert_user()
-    bot_token = os.getenv('BOT_TOKEN')
+
     for user in users:
         addr_s = await get_address(user_id=user)
         addr_s = addr_s.split(',')
@@ -141,24 +146,12 @@ async def send_alert_user():
         for addr in addr_s:
             print(user, addr)
             text = await get_text_msg(wallet_address=addr)
-            data = {
-                "chat_id": f"{user}",
-                "parse_mode": "markdown",
-                "link_preview_options": {
-                    'is_disabled': True
-                }
-            }
+
             if text is not None:
-                url = f"https://api.telegram.org/bot{bot_token}/sendMessage?text={text}"
-                response = requests.post(url=url, json=data)
-                print(response.json())
+                await message.bot.send_message(chat_id=user, text=text,
+                                               disable_web_page_preview=True, parse_mode="Markdown")
             else:
                 await asyncio.sleep(1)
                 text = await get_text_msg(wallet_address=addr)
-                url = f"https://api.telegram.org/bot{bot_token}/sendMessage?text={text}"
-                response = requests.post(url=url, json=data)
-
-
-# @router.message(F.text)
-# async def msg_hang(message: Message):
-#     pprint(message.from_user.language_code)
+                await message.bot.send_message(chat_id=user, text=text,
+                                               disable_web_page_preview=True, parse_mode="Markdown")

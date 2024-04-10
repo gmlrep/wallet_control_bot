@@ -39,7 +39,6 @@ async def get_balance_jettons(wallet_address: str):
             'diff_24h_value': {
                 'USD': value_usd * diff_24h_usd / 100
             }
-
         }]
         for resp in jetton_wallet['balances']:
             if int(resp['balance']) != 0:

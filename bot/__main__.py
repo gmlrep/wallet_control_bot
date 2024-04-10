@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
 from bot.handlers.handler import router, send_alert_user
+from bot.middleware.apscheduler_middleware import SchedulerMiddleware
 
 load_dotenv()
 
@@ -25,10 +26,11 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
 
-    time = os.getenv("TIME").split(':')
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+
+    dp.update.middleware.register(SchedulerMiddleware(scheduler))
+
     scheduler.start()
-    scheduler.add_job(send_alert_user, 'cron', hour=time[0], minute=time[1])
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
