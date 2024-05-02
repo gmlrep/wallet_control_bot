@@ -45,8 +45,10 @@ async def get_balance_jettons(wallet_address: str):
 
                 value = int(resp['balance']) / 1000000000 * resp['price']['prices']['USD']
                 if value > 0.1:
-                    diff_24h_ton = float(resp['price']['diff_24h']['TON'].split('%')[0])
-                    diff_24h_usd = float(resp['price']['diff_24h']['USD'].split('%')[0])
+                    diff_24h_ton = resp['price']['diff_24h']['TON'].split('%')[0]
+                    diff_24h_usd = resp['price']['diff_24h']['USD'].split('%')[0]
+                    diff_24h_ton = float(diff_24h_ton.replace('−', '-'))
+                    diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
                     value_ton = int(resp['balance']) / 1000000000 * resp['price']['prices']['TON']
                     value_usd = int(resp['balance']) / 1000000000 * resp['price']['prices']['USD']

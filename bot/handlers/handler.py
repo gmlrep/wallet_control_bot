@@ -141,17 +141,18 @@ async def send_alert_user(message: Message):
 
     for user in users:
         addr_s = await get_address(user_id=user)
-        addr_s = addr_s.split(',')
+        if addr_s is not None:
+            addr_s = addr_s.split(',')
 
-        for addr in addr_s:
-            print(user, addr)
-            text = await get_text_msg(wallet_address=addr)
-
-            if text is not None:
-                await message.bot.send_message(chat_id=user, text=text,
-                                               disable_web_page_preview=True, parse_mode="Markdown")
-            else:
-                await asyncio.sleep(1)
+            for addr in addr_s:
+                print(user, addr)
                 text = await get_text_msg(wallet_address=addr)
-                await message.bot.send_message(chat_id=user, text=text,
-                                               disable_web_page_preview=True, parse_mode="Markdown")
+
+                if text is not None:
+                    await message.bot.send_message(chat_id=user, text=text,
+                                                   disable_web_page_preview=True, parse_mode="Markdown")
+                else:
+                    await asyncio.sleep(1)
+                    text = await get_text_msg(wallet_address=addr)
+                    await message.bot.send_message(chat_id=user, text=text,
+                                                   disable_web_page_preview=True, parse_mode="Markdown")
