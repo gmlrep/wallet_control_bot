@@ -1,12 +1,13 @@
 import asyncio
-import os
 from pprint import pprint
 
 import aiohttp
 
+from bot.db.config import settings
+
 
 async def get_balance_jettons(wallet_address: str):
-    api_key = os.getenv('API_KEY')
+    api_key = settings.api_token
 
     url = f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd'
     url_ton = f'https://tonapi.io/v2/accounts/{wallet_address}'
@@ -78,7 +79,7 @@ async def get_balance_jettons(wallet_address: str):
 
 
 async def check_address(address: str):
-    api_key = os.getenv('API_KEY')
+    api_key = settings.api_token
 
     url = f'https://tonapi.io/v2/address/{address}/parse'
     headers = {

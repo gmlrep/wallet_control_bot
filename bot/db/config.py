@@ -11,8 +11,12 @@ load_dotenv()
 
 class Settings(BaseSettings):
     bot_token: str = os.getenv('BOT_TOKEN')
+
+    api_token: str = os.getenv('API_KEY')
+
     db_url: str = f"sqlite+aiosqlite:///{BASE_DIR}/database.db"
     echo: bool = False
 
+    time_sheduler: str = os.getenv('TIME')
 
 settings = Settings()

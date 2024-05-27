@@ -1,36 +1,36 @@
 import asyncio
-import os
 from pprint import pprint
 
-import aiohttp
-import requests
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from dotenv import load_dotenv
 
-from bot.db.requests import create_profile, update_profile_addr, get_address, update_profile_alert, get_list_alert_user
-from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings
+from bot.db.config import settings
+from bot.db.requests import create_profile, update_profile_addr, get_address, update_profile_alert, get_list_alert_user, \
+    delete_address_by_user_id, update_name_addr
+from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.wallet_control import get_balance_jettons, check_address
 
 router = Router()
 
-load_dotenv()
-
 
 class Address(StatesGroup):
     address = State()
+    single_view_address = State()
+    addr_name = State()
 
 
 @router.message(Command('start'))
-async def start_handler(message: Message, scheduler: AsyncIOScheduler):
+async def start_handler(message: Message, scheduler: AsyncIOScheduler, state: FSMContext):
+    await state.clear()
     ids = scheduler.get_job(job_id='send_msg')
     if ids is None:
-        time = os.getenv("TIME").split(':')
-        scheduler.add_job(send_alert_user, 'cron', hour=time[0], minute=time[1], kwargs={'message': message}, id='send_msg')
+        time = settings.time_sheduler.split(':')
+        scheduler.add_job(send_alert_user, 'cron', hour=time[0], minute=time[1],
+                          kwargs={'message': message}, id='send_msg')
     is_registered = await create_profile(user_id=message.from_user.id,
                                          user_fullname=message.from_user.full_name,
                                          username=message.from_user.username)
@@ -51,9 +51,7 @@ async def add_wallet(callback: CallbackQuery, state: FSMContext):
 @router.message(F.text, Address.address)
 async def set_address(message: Message, state: FSMContext):
     if await check_address(address=message.text):
-        data = await get_address(user_id=message.from_user.id)
-        addr = f"{data},{message.text}" if data else message.text
-        await update_profile_addr(user_id=message.from_user.id, address=addr)
+        await update_profile_addr(user_id=message.from_user.id, address=message.text)
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
         await state.clear()
     else:
@@ -116,8 +114,59 @@ async def show_balance(callback: CallbackQuery):
     await callback.answer()
 
 
+@router.callback_query(F.data == 'edit_addr_list')
+async def edit_list_addr(callback: CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id))
+    await callback.answer()
+
+
+@router.callback_query(F.data == 'single_view_balance')
+async def quick_balance(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Address.single_view_address)
+    await callback.message.answer(text='Введите адрес кошелька, баланс которого хотите посмотреть в сети TON.')
+    await callback.answer()
+
+
+@router.message(F.text, Address.single_view_address)
+async def set_address(message: Message, state: FSMContext):
+    if await check_address(address=message.text):
+        text = await get_text_msg(wallet_address=message.text)
+        if text is None:
+            await message.answer(text='Что то пошло не так. Попробуйте еще раз.')
+        else:
+            await message.answer(text=text, disable_web_page_preview=True, parse_mode="Markdown")
+            await message.answer(text='Главное меню', reply_markup=kb_menu())
+        await state.clear()
+    else:
+        await message.answer(text='Такого адреса не существует. Введите корректный адрес.')
+
+
+@router.callback_query(F.data.startswith('edit_address'))
+async def delete_address(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer(text='Введите название кошелька')
+    await state.update_data(address=callback.data.split(':')[1])
+    await state.set_state(Address.addr_name)
+    await callback.answer()
+
+
+# TODO Решить проблему с изменением клавиатуры
+@router.message(F.text, Address.addr_name)
+async def set_address(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await update_name_addr(user_id=message.from_user.id, addr_name=message.text, address=data['address'])
+    await message.edit_reply_markup(reply_markup=await kb_list_addr(user_id=message.from_user.id))
+    await state.clear()
+
+
+@router.callback_query(F.data.startswith('delete_address'))
+async def delete_address(callback: CallbackQuery):
+    address = callback.data.split(':')[1]
+    await delete_address_by_user_id(user_id=callback.from_user.id, address=address)
+    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id))
+
+
 @router.callback_query(F.data == 'settings')
-async def setting_handlers(callback: CallbackQuery, state: FSMContext):
+async def setting_handlers(callback: CallbackQuery):
     await callback.message.edit_text(text='Настройки',
                                      reply_markup=await kb_settings(user_id=callback.from_user.id))
     await callback.answer()
@@ -142,10 +191,8 @@ async def send_alert_user(message: Message):
     for user in users:
         addr_s = await get_address(user_id=user)
         if addr_s is not None:
-            addr_s = addr_s.split(',')
 
             for addr in addr_s:
-                print(user, addr)
                 text = await get_text_msg(wallet_address=addr)
 
                 if text is not None:
