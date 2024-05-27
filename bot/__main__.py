@@ -1,17 +1,13 @@
 import asyncio
 import logging
-import os
 
 from aiogram import Bot, Dispatcher
-from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from dotenv import load_dotenv
 
-from bot.handlers.handler import router, send_alert_user
+from bot.handlers.handler import router
 from bot.middleware.apscheduler_middleware import SchedulerMiddleware
-
-load_dotenv()
+from bot.db.config import settings
 
 
 async def main():
@@ -22,7 +18,7 @@ async def main():
         format="%(asctime)s - %(name)s - %(message)s",
     )
 
-    bot = Bot(token=os.getenv('BOT_TOKEN'))
+    bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
 

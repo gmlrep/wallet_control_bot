@@ -1,12 +1,7 @@
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from bot.db.config import settings
+from bot.db.database import async_session
 from bot.db.models import User
-
-async_engine = create_async_engine(settings.db_url, echo=settings.echo)
-
-async_session = async_sessionmaker(async_engine, expire_on_commit=True)
 
 
 async def create_profile(user_id: int, user_fullname: str, username: str, address: str = None, alert: bool = True):
