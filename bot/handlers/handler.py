@@ -1,5 +1,4 @@
 import asyncio
-from pprint import pprint
 
 from aiogram import F, Router
 from aiogram.filters import Command
@@ -9,8 +8,8 @@ from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from bot.db.config import settings
-from bot.db.requests import create_profile, update_profile_addr, get_address, update_profile_alert, get_list_alert_user, \
-    delete_address_by_user_id, update_name_addr
+from bot.db.requests import (create_profile, update_profile_addr, get_address, update_profile_alert,
+                             get_list_alert_user, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.wallet_control import get_balance_jettons, check_address
 
@@ -28,7 +27,7 @@ async def start_handler(message: Message, scheduler: AsyncIOScheduler, state: FS
     await state.clear()
     ids = scheduler.get_job(job_id='send_msg')
     if ids is None:
-        time = settings.time_sheduler.split(':')
+        time = settings.time_scheduler.split(':')
         scheduler.add_job(send_alert_user, 'cron', hour=time[0], minute=time[1],
                           kwargs={'message': message}, id='send_msg')
     is_registered = await create_profile(user_id=message.from_user.id,
@@ -149,12 +148,11 @@ async def delete_address(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# TODO Решить проблему с изменением клавиатуры
 @router.message(F.text, Address.addr_name)
 async def set_address(message: Message, state: FSMContext):
     data = await state.get_data()
     await update_name_addr(user_id=message.from_user.id, addr_name=message.text, address=data['address'])
-    await message.edit_reply_markup(reply_markup=await kb_list_addr(user_id=message.from_user.id))
+    await message.answer(text='Выберите нужный адрес', reply_markup=await kb_list_addr(user_id=message.from_user.id))
     await state.clear()
 
 

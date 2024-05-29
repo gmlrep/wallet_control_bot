@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     db_url: str = f"sqlite+aiosqlite:///{BASE_DIR}/database.db"
     echo: bool = False
 
-    time_sheduler: str = os.getenv('TIME')
+    time_scheduler: str = os.getenv('TIME')
+
 
 settings = Settings()

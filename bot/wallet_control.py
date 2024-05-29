@@ -1,5 +1,4 @@
 import asyncio
-from pprint import pprint
 
 import aiohttp
 
@@ -79,12 +78,8 @@ async def get_balance_jettons(wallet_address: str):
 
 
 async def check_address(address: str):
-    api_key = settings.api_token
 
     url = f'https://tonapi.io/v2/address/{address}/parse'
-    headers = {
-        "Authorization": f"Bearer {api_key}"
-    }
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url=url) as response:
