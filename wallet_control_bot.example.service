@@ -1,0 +1,16 @@
+# Rename to wallet_control_bot.service
+[Unit]
+Description=Wallet control bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/your_directory_to_project
+ExecStart=/home/your_directory_to_project/venv/bin/python -m bot
+KillMode=process
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
