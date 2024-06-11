@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import prometheus_client
 
 from bot.db.config import settings
 from bot.db.requests import (create_profile, update_profile_addr, get_address, update_profile_alert,
@@ -22,8 +23,17 @@ class Address(StatesGroup):
     addr_name = State()
 
 
+start_count = prometheus_client.Counter(
+    "start_count",
+    "Number of start"
+)
+
+
 @router.message(Command('start'))
 async def start_handler(message: Message, scheduler: AsyncIOScheduler, state: FSMContext):
+
+    start_count.inc(1)
+
     await state.clear()
     ids = scheduler.get_job(job_id='send_msg')
     if ids is None:

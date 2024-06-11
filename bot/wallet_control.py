@@ -1,6 +1,9 @@
 import asyncio
+from datetime import datetime
+from pprint import pprint
 
 import aiohttp
+import requests
 
 from bot.db.config import settings
 
