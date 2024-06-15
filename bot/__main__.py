@@ -4,7 +4,6 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from prometheus_client import start_http_server, make_asgi_app, start_wsgi_server
 
 from bot.handlers.handler import router
 from bot.middleware.apscheduler_middleware import SchedulerMiddleware
