@@ -39,6 +39,7 @@ async def kb_list_addr(user_id: int):
 async def kb_list_edit_delete(user_id: int):
     address = await get_addr_name(user_id=user_id)
     addr_btn = InlineKeyboardBuilder()
+
     for addr in address:
         if addr[1]:
             addr_btn.button(text=addr[1], callback_data=f'show_balance:{addr[0]}')
