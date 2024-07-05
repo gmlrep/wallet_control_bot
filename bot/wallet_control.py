@@ -1,10 +1,16 @@
 import asyncio
+import os
+import time
+from datetime import datetime
+from pprint import pprint
+
 import aiohttp
+import requests
 
 from bot.db.config import settings
 
 
-async def get_balance_jettons(wallet_address: str):
+async def get_balance_jeton(wallet_address: str):
     api_key = settings.api_token
 
     url = f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd'
@@ -88,3 +94,48 @@ async def check_address(address: str):
                 return False
             except KeyError:
                 return True
+
+
+
+# from pytonapi import Tonapi
+# from pytonapi.utils import nano_to_amount
+
+
+# API_KEY = os.getenv('API_KEY')
+ACCOUNT_ID = "UQCq_TkDcTyDJFDQSNoKljOXdejDKV-s-WIXi0xGHBeciiRo"
+JETON_ID = 'EQD3U8yc2moTe8yCbUlYxkMh_SCCWLkuxQam2lab4iDfpXYU'
+
+
+# def mnm():
+#     tonapi = Tonapi(api_key=API_KEY)
+#     result = tonapi.blockchain.get_account_transactions(account_id=ACCOUNT_ID, limit=1000)
+#     rep = tonapi.blockchain.get_account_info(account_id='EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_')
+#     # print(rep.address)
+#
+#     for transaction in result.transactions:
+#         try:
+#             if transaction.out_msgs[0].decoded_op_name == 'dedust_swap':
+#                 print(transaction)
+#                 print(nano_to_amount(transaction.out_msgs[0].value))
+#         except:
+#             pass
+#
+#
+# mnm()
+
+def mnmn():
+    url1 = f'https://tonapi.io/v2/accounts/{ACCOUNT_ID}/jettons/history'
+    url = f'https://tonapi.io/v2/accounts/{ACCOUNT_ID}/jettons/{JETON_ID}/history'
+    params = {
+        'limit': 100,
+        'start_date': 1668436763,
+        'end_date': int(datetime.now().timestamp()),
+    }
+    resp = requests.get(url=url, params=params)
+    pprint(resp.json())
+    # dict_jet = {
+    #     'status':
+    # }
+
+
+# mnmn()

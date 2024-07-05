@@ -11,7 +11,7 @@ from bot.db.config import settings
 from bot.db.requests import (create_profile, update_profile_addr, get_address, update_profile_alert,
                              get_list_alert_user, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
-from bot.wallet_control import get_balance_jettons, check_address
+from bot.wallet_control import get_balance_jeton, check_address
 
 router = Router()
 
@@ -66,7 +66,7 @@ async def get_list_addr(callback: CallbackQuery):
 
 
 async def get_text_msg(wallet_address: str):
-    data = await get_balance_jettons(wallet_address=wallet_address)
+    data = await get_balance_jeton(wallet_address=wallet_address)
 
     if data is not None:
         text = (
