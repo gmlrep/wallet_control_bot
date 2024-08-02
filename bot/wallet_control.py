@@ -1,30 +1,35 @@
 import asyncio
+from pprint import pprint
+
 import aiohttp
+from typing import Optional
 
 from bot.db.config import settings
 
 
-async def get_balance_jettons(wallet_address: str):
+async def get_inf_api(url: str, headers: dict):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            data = await response.json(encoding='utf8')
+            return data
+
+
+async def get_balance_jettons(wallet_address: str) -> Optional[list]:
     api_key = settings.api_token
-
-    url = f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd'
-    url_ton = f'https://tonapi.io/v2/accounts/{wallet_address}'
-    url_price_ton = 'https://tonapi.io/v2/rates?tokens=ton&currencies=usd'
-
+    urls = {
+        'url': f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd',
+        'url_ton': f'https://tonapi.io/v2/accounts/{wallet_address}',
+        'url_price_ton': 'https://tonapi.io/v2/rates?tokens=ton&currencies=usd'
+    }
     headers = {
         "Authorization": f"Bearer {api_key}"
     }
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url=url, headers=headers) as response:
-            jetton_wallet = await response.json(encoding='utf8')
-            await asyncio.sleep(.7)
-        async with session.get(url=url_ton, headers=headers) as response:
-            ton_wallet = await response.json(encoding='utf8')
-            await asyncio.sleep(.7)
-        async with session.get(url=url_price_ton, headers=headers) as response:
-            ton_price = await response.json(encoding='utf8')
-            await asyncio.sleep(.7)
+    corut = [get_inf_api(url, headers) for url in urls.values()]
+    response = await asyncio.gather(*corut)
+    jetton_wallet = response[0]
+    ton_wallet = response[1]
+    ton_price = response[2]
     try:
         value_usd = int(ton_wallet['balance']) / 1000000000 * ton_price['rates']['TON']['prices']['USD']
         diff_24h_usd = ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0]
@@ -76,15 +81,14 @@ async def get_balance_jettons(wallet_address: str):
         pass
 
 
-async def check_address(address: str):
+async def check_address(address: str) -> bool:
 
     url = f'https://tonapi.io/v2/address/{address}/parse'
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url=url) as response:
-            status = await response.json()
-            try:
-                error_status = status['error']
+            status = response.status
+            if status != 200:
                 return False
-            except KeyError:
+            else:
                 return True
