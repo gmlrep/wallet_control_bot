@@ -24,7 +24,7 @@ class Address(StatesGroup):
 
 @router.message(Command('start'))
 async def start_handler(message: Message, scheduler: AsyncIOScheduler, state: FSMContext):
-
+    print(message.chat.id)
     await state.clear()
     ids = scheduler.get_job(job_id='send_msg')
     if ids is None:
@@ -71,27 +71,27 @@ async def get_text_msg(wallet_address: str):
     if data is not None:
         text = (
             f"Address - [{wallet_address[:5]}..{wallet_address[len(wallet_address) - 5:len(wallet_address)]}](https://tonscan.org/address/{wallet_address})\n\n"
-            f"{round(data[0]['balance'], 2)} 💎 | {round(data[0]['value_usd'], 2)}$\n\n")
+            f"{round(data['native']['balance'], 2)} 💎 | {round(data['native']['value_usd'], 2)}$\n\n")
 
-        for i in range(1, len(data)):
-            text += ''.join(f"⏺ {round(data[i]['balance'], 2)} {data[i]['jetton_name']}\n"
-                            f"{round(data[i]['value_ton'], 2)} 💎 | {round(data[i]['value_usd'], 3)}$\n\n")
+        for jetton in data['jettons']:
+            text += ''.join(f"⏺ {round(jetton['balance'], 2)} {jetton['jetton_name']}\n"
+                            f"{round(jetton['value_ton'], 2)} 💎 | {round(jetton['value_usd'], 3)}$\n\n")
 
-        total_ton = data[0]['balance']
-        for i in range(1, len(data)):
-            total_ton += data[i]['value_ton']
+        total_ton = data['native']['balance']
+        for jetton in data['jettons']:
+            total_ton += jetton['value_ton']
 
-        total_usd = 0
-        for token in data:
+        total_usd = data['native']['value_usd']
+        for token in data['jettons']:
             total_usd += token['value_usd']
 
-        total_dff_24h_usd = 0
-        for dff_24h_usd in data:
+        total_dff_24h_usd = data['native']['diff_24h_value']['USD']
+        for dff_24h_usd in data['jettons']:
             total_dff_24h_usd += dff_24h_usd['diff_24h_value']['USD']
 
         total_diff_24_ton = 0
-        for i in range(1, len(data)):
-            total_diff_24_ton += data[i]['diff_24h_value']['TON']
+        for jetton in data['jettons']:
+            total_diff_24_ton += jetton['diff_24h_value']['TON']
 
         if total_dff_24h_usd >= 0:
             text += ''.join(f"🟢 {round(total_diff_24_ton, 2)} 💎 | +{round(total_dff_24h_usd, 2)}$\n\n")

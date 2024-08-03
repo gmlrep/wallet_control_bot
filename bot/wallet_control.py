@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pprint import pprint
 
 import aiohttp
@@ -7,14 +8,14 @@ from typing import Optional
 from bot.db.config import settings
 
 
-async def get_inf_api(url: str, headers: dict):
+async def get_inf_api(url: str, headers: dict) -> dict:
     async with aiohttp.ClientSession() as session:
         async with session.get(url=url, headers=headers) as response:
             data = await response.json(encoding='utf8')
             return data
 
 
-async def get_balance_jettons(wallet_address: str) -> Optional[list]:
+async def get_balance_jettons(wallet_address: str) -> Optional[dict]:
     api_key = settings.api_token
     urls = {
         'url': f'https://tonapi.io/v2/accounts/{wallet_address}/jettons?currencies=ton,usd',
@@ -27,15 +28,15 @@ async def get_balance_jettons(wallet_address: str) -> Optional[list]:
 
     corut = [get_inf_api(url, headers) for url in urls.values()]
     response = await asyncio.gather(*corut)
-    jetton_wallet = response[0]
-    ton_wallet = response[1]
-    ton_price = response[2]
+    jetton_wallet, ton_wallet, ton_price, = list(response)
+
     try:
         value_usd = int(ton_wallet['balance']) / 1000000000 * ton_price['rates']['TON']['prices']['USD']
         diff_24h_usd = ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0]
         diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
-        list_jetton = [{
+
+        native = {
             'jetton_name': 'TON',
             'balance': int(ton_wallet['balance']) / 1000000000,
             'price_usd': ton_price['rates']['TON']['prices']['USD'],
@@ -46,7 +47,8 @@ async def get_balance_jettons(wallet_address: str) -> Optional[list]:
             'diff_24h_value': {
                 'USD': value_usd * diff_24h_usd / 100
             }
-        }]
+        }
+        jettons = []
         for resp in jetton_wallet['balances']:
             if int(resp['balance']) != 0:
                 balance = int(resp['balance']) / 10**int(resp['jetton']['decimals'])
@@ -60,7 +62,7 @@ async def get_balance_jettons(wallet_address: str) -> Optional[list]:
                     value_ton = balance * resp['price']['prices']['TON']
                     value_usd = balance * resp['price']['prices']['USD']
 
-                    list_jetton.append({
+                    jettons.append({
                         'jetton_name': resp['jetton']['symbol'],
                         'balance': balance,
                         'price_ton': resp['price']['prices']['TON'],
@@ -76,7 +78,8 @@ async def get_balance_jettons(wallet_address: str) -> Optional[list]:
                             'USD': value_usd * diff_24h_usd / 100
                         }
                     })
-        return list_jetton
+        jettons.sort(key=lambda x: x['value_usd'], reverse=True)
+        return {'native': native, 'jettons': jettons}
     except KeyError:
         pass
 
