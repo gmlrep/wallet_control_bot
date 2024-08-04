@@ -9,7 +9,7 @@ async def get_inf_api(url: str, headers: dict) -> dict | None:
     async with aiohttp.ClientSession() as session:
         async with session.get(url=url, headers=headers) as response:
             if response.status != 200:
-                return None
+                return
             data = await response.json(encoding='utf8')
             return data
 
