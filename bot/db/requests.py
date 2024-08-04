@@ -14,11 +14,10 @@ async def create_profile(user_id: int, user_fullname: str, username: str) -> boo
             session.add(user)
             await session.commit()
             return False
-        else:
-            return True
+        return True
 
 
-async def update_profile_addr(user_id: int, address: str):
+async def add_address(user_id: int, address: str):
     async with async_session() as session:
         stmt = insert(Address).values(address=address, user_id=user_id)
         await session.execute(stmt)

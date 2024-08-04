@@ -7,7 +7,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from bot.db.requests import (create_profile, update_profile_addr, update_profile_alert,
+from bot.db.requests import (create_profile, add_address, update_profile_alert,
                              get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.wallet_control import get_balance_jettons, check_address
@@ -44,7 +44,7 @@ async def add_wallet(callback: CallbackQuery, state: FSMContext):
 @router.message(F.text, Address.address)
 async def set_address(message: Message, state: FSMContext):
     if await check_address(address=message.text):
-        await update_profile_addr(user_id=message.from_user.id, address=message.text)
+        await add_address(user_id=message.from_user.id, address=message.text)
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
         await state.clear()
     else:

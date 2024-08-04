@@ -3,4 +3,4 @@
 __pycache__/
 /.env
 bot/db/database.db
-bot/data/error.log
+bot/data/
