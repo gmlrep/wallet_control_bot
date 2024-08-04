@@ -7,8 +7,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from bot.db.requests import (create_profile, update_profile_addr, get_address, update_profile_alert,
-                             get_list_alert_user, delete_address_by_user_id, update_name_addr)
+from bot.db.requests import (create_profile, update_profile_addr, update_profile_alert,
+                             get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.wallet_control import get_balance_jettons, check_address
 
@@ -178,20 +178,16 @@ async def back_to_main(callback: CallbackQuery):
 
 
 async def send_alert_user(bot: Bot):
-    users = await get_list_alert_user()
+    list_user_addr = await get_list_alert_user_addr()
 
-    for user in users:
-        addr_s = await get_address(user_id=user)
-        if addr_s is not None:
+    for addr in list_user_addr:
+        text = await get_text_msg(wallet_address=addr[1])
 
-            for addr in addr_s:
-                text = await get_text_msg(wallet_address=addr)
-
-                if text is not None:
-                    await bot.send_message(chat_id=user, text=text,
-                                           disable_web_page_preview=True, parse_mode="Markdown")
-                else:
-                    await asyncio.sleep(1)
-                    text = await get_text_msg(wallet_address=addr)
-                    await bot.send_message(chat_id=user, text=text,
-                                           disable_web_page_preview=True, parse_mode="Markdown")
+        if text is not None:
+            await bot.send_message(chat_id=addr[0], text=text,
+                                   disable_web_page_preview=True, parse_mode="Markdown")
+        else:
+            await asyncio.sleep(1)
+            text = await get_text_msg(wallet_address=addr)
+            await bot.send_message(chat_id=addr[0], text=text,
+                                   disable_web_page_preview=True, parse_mode="Markdown")
