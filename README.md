@@ -5,6 +5,7 @@
 
 ![menu](img/menu.jpg)
 ![wallet_view](img/wallet_view.jpg)
+
 ## Используемые технологии
 <div> 
 <img src="https://img.shields.io/badge/Python-blue">
