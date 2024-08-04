@@ -7,7 +7,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from bot.db.config import settings
 from bot.db.requests import (create_profile, update_profile_addr, get_address, update_profile_alert,
                              get_list_alert_user, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
@@ -59,7 +58,14 @@ async def get_list_addr(callback: CallbackQuery):
     await callback.answer()
 
 
-async def get_text_msg(wallet_address: str):
+async def get_text_msg(wallet_address: str) -> str | None:
+    """
+    Generate text with description of wallet for telegram
+
+    :param wallet_address: address of wallet on ton blockchain
+    :return: text for send on telegram :class:`str`
+    """
+
     data = await get_balance_jettons(wallet_address=wallet_address)
 
     if data is not None:
@@ -71,21 +77,14 @@ async def get_text_msg(wallet_address: str):
             text += ''.join(f"⏺ {round(jetton['balance'], 2)} {jetton['jetton_name']}\n"
                             f"{round(jetton['value_ton'], 2)} 💎 | {round(jetton['value_usd'], 3)}$\n\n")
 
-        total_ton = data['native']['balance']
-        for jetton in data['jettons']:
-            total_ton += jetton['value_ton']
+        total_ton = data['native']['balance'] + sum([jetton['value_ton'] for jetton in data['jettons']])
 
-        total_usd = data['native']['value_usd']
-        for token in data['jettons']:
-            total_usd += token['value_usd']
+        total_usd = data['native']['value_usd'] + sum([token['value_usd'] for token in data['jettons']])
 
-        total_dff_24h_usd = data['native']['diff_24h_value']['USD']
-        for dff_24h_usd in data['jettons']:
-            total_dff_24h_usd += dff_24h_usd['diff_24h_value']['USD']
+        total_dff_24h_usd = (data['native']['diff_24h_value']['USD'] +
+                             sum([dff_24h_usd['diff_24h_value']['USD'] for dff_24h_usd in data['jettons']]))
 
-        total_diff_24_ton = 0
-        for jetton in data['jettons']:
-            total_diff_24_ton += jetton['diff_24h_value']['TON']
+        total_diff_24_ton = sum([jetton['diff_24h_value']['TON'] for jetton in data['jettons']])
 
         if total_dff_24h_usd >= 0:
             text += ''.join(f"🟢 {round(total_diff_24_ton, 2)} 💎 | +{round(total_dff_24h_usd, 2)}$\n\n")
