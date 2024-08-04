@@ -1,5 +1,3 @@
-import asyncio
-
 from sqlalchemy import select, update, insert, delete
 
 from bot.db.database import async_session
