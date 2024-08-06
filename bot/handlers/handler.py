@@ -73,18 +73,19 @@ async def get_text_msg(wallet_address: str) -> str | None:
             f"Address - [{wallet_address[:5]}..{wallet_address[len(wallet_address) - 5:len(wallet_address)]}](https://tonscan.org/address/{wallet_address})\n\n"
             f"{round(data['native']['balance'], 2)} 💎 | {round(data['native']['value_usd'], 2)}$\n\n")
 
+        total_ton = data['native']['balance']
+        total_usd = data['native']['value_usd']
+        total_dff_24h_usd = data['native']['diff_24h_value']['USD']
+        total_diff_24_ton = 0
+
         for jetton in data['jettons']:
             text += ''.join(f"⏺ {round(jetton['balance'], 2)} {jetton['jetton_name']}\n"
                             f"{round(jetton['value_ton'], 2)} 💎 | {round(jetton['value_usd'], 3)}$\n\n")
 
-        total_ton = data['native']['balance'] + sum([jetton['value_ton'] for jetton in data['jettons']])
-
-        total_usd = data['native']['value_usd'] + sum([token['value_usd'] for token in data['jettons']])
-
-        total_dff_24h_usd = (data['native']['diff_24h_value']['USD'] +
-                             sum([dff_24h_usd['diff_24h_value']['USD'] for dff_24h_usd in data['jettons']]))
-
-        total_diff_24_ton = sum([jetton['diff_24h_value']['TON'] for jetton in data['jettons']])
+            total_ton += jetton['value_ton']
+            total_usd += jetton['value_usd']
+            total_diff_24_ton += jetton['diff_24h_value']['TON']
+            total_dff_24h_usd += jetton['diff_24h_value']['USD']
 
         if total_dff_24h_usd >= 0:
             text += ''.join(f"🟢 {round(total_diff_24_ton, 2)} 💎 | +{round(total_dff_24h_usd, 2)}$\n\n")

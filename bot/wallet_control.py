@@ -36,19 +36,19 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
     response = await asyncio.gather(*corut)
     jetton_wallet, ton_wallet, ton_price, = list(response)
 
+    balance_ton = int(ton_wallet['balance']) / 1000000000
+    price_ton = ton_price['rates']['TON']['prices']['USD']
+
     try:
-        value_usd = int(ton_wallet['balance']) / 1000000000 * ton_price['rates']['TON']['prices']['USD']
+        value_usd = balance_ton * price_ton
         diff_24h_usd = ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0]
         diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
         native = {
             'jetton_name': 'TON',
-            'balance': int(ton_wallet['balance']) / 1000000000,
-            'price_usd': ton_price['rates']['TON']['prices']['USD'],
+            'balance': balance_ton,
+            'price_usd': price_ton,
             'value_usd': value_usd,
-            'diff_24h': {
-                'USD': ton_price['rates']['TON']['diff_24h']['USD']
-            },
             'diff_24h_value': {
                 'USD': value_usd * diff_24h_usd / 100
             }
@@ -56,8 +56,8 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
         jettons = []
         for resp in jetton_wallet['balances']:
             if (bal := int(resp['balance'])) != 0:
-                balance = bal / 10**int(resp['jetton']['decimals'])
-                value = balance * resp['price']['prices']['USD']
+                balance = bal / 10 ** int(resp['jetton']['decimals'])
+                value = balance * (price_usd := resp['price']['prices']['USD'])
 
                 if value > 0.1:
                     diff_24h_ton = resp['price']['diff_24h']['TON'].split('%')[0]
@@ -65,20 +65,16 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
                     diff_24h_ton = float(diff_24h_ton.replace('−', '-'))
                     diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
-                    value_ton = balance * resp['price']['prices']['TON']
-                    value_usd = balance * resp['price']['prices']['USD']
+                    value_ton = balance * (price_ton := resp['price']['prices']['TON'])
+                    value_usd = balance * price_usd
 
                     jettons.append({
                         'jetton_name': resp['jetton']['symbol'],
                         'balance': balance,
-                        'price_ton': resp['price']['prices']['TON'],
-                        'price_usd': resp['price']['prices']['USD'],
+                        'price_ton': price_ton,
+                        'price_usd': price_usd,
                         'value_ton': value_ton,
                         'value_usd': value_usd,
-                        'diff_24h': {
-                            'TON': resp['price']['diff_24h']['TON'],
-                            'USD': resp['price']['diff_24h']['USD']
-                        },
                         'diff_24h_value': {
                             'TON': value_ton * diff_24h_ton / 100,
                             'USD': value_usd * diff_24h_usd / 100
@@ -91,7 +87,6 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
 
 
 async def check_address(address: str) -> bool:
-
     url = f'https://tonapi.io/v2/address/{address}/parse'
 
     async with aiohttp.ClientSession() as session:
