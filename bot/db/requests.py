@@ -1,4 +1,8 @@
-from sqlalchemy import select, update, insert, delete
+import asyncio
+
+from sqlalchemy import select, update, delete, not_
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 
 from bot.db.database import async_session
 from bot.db.models import User, Address
@@ -6,13 +10,13 @@ from bot.db.models import User, Address
 
 async def create_profile(user_id: int, user_fullname: str, username: str) -> bool:
     async with async_session() as session:
-        user = (await session.execute(select(User.id).filter_by(user_id=user_id))).all()
-        if not user:
-            user = User(user_id=user_id, username=username, user_fullname=user_fullname)
-            session.add(user)
+        try:
+            stmt = insert(User).values(user_id=user_id, username=username, user_fullname=user_fullname)
+            await session.execute(stmt)
             await session.commit()
             return False
-        return True
+        except IntegrityError:
+            return True
 
 
 async def add_address(user_id: int, address: str):
@@ -37,16 +41,16 @@ async def get_alert_status(user_id: int) -> bool:
 
 
 async def update_profile_alert(user_id: int):
-    alert = await get_alert_status(user_id=user_id)
     async with async_session() as session:
-        await session.execute(update(User).filter_by(user_id=user_id).values(alert=not alert))
+        stmt = update(User).filter_by(user_id=user_id).values(alert=not_(User.alert))
+        await session.execute(stmt)
         await session.commit()
 
 
 async def get_list_alert_user_addr() -> list:
     async with async_session() as session:
         stmt = select(User.user_id, Address.address).join(
-                Address, User.user_id == Address.user_id).filter(User.alert)
+            Address, User.user_id == Address.user_id).filter(User.alert)
         resp = await session.execute(stmt)
         return resp.all()
 
