@@ -36,53 +36,56 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
     response = await asyncio.gather(*corut)
     jetton_wallet, ton_wallet, ton_price, = list(response)
 
-    balance_ton = int(ton_wallet['balance']) / 1000000000
-    price_ton = ton_price['rates']['TON']['prices']['USD']
+    if jetton_wallet and ton_wallet and ton_price:
+        balance_ton = int(ton_wallet['balance']) / 1000000000
+        price_ton = ton_price['rates']['TON']['prices']['USD']
 
-    try:
-        value_usd = balance_ton * price_ton
-        diff_24h_usd = ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0]
-        diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
+        try:
+            value_usd = balance_ton * price_ton
+            diff_24h_usd = ton_price['rates']['TON']['diff_24h']['USD'].split('%')[0]
+            diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
-        native = {
-            'jetton_name': 'TON',
-            'balance': balance_ton,
-            'price_usd': price_ton,
-            'value_usd': value_usd,
-            'diff_24h_value': {
-                'USD': value_usd * diff_24h_usd / 100
+            native = {
+                'jetton_name': 'TON',
+                'balance': balance_ton,
+                'price_usd': price_ton,
+                'value_usd': value_usd,
+                'diff_24h_value': {
+                    'USD': value_usd * diff_24h_usd / 100
+                }
             }
-        }
-        jettons = []
-        for resp in jetton_wallet['balances']:
-            if (bal := int(resp['balance'])) != 0:
-                balance = bal / 10 ** int(resp['jetton']['decimals'])
-                value = balance * (price_usd := resp['price']['prices']['USD'])
+            jettons = []
+            for resp in jetton_wallet['balances']:
+                if (bal := int(resp['balance'])) != 0:
+                    balance = bal / 10 ** int(resp['jetton']['decimals'])
+                    value = balance * (price_usd := resp['price']['prices']['USD'])
 
-                if value > 0.1:
-                    diff_24h_ton = resp['price']['diff_24h']['TON'].split('%')[0]
-                    diff_24h_usd = resp['price']['diff_24h']['USD'].split('%')[0]
-                    diff_24h_ton = float(diff_24h_ton.replace('−', '-'))
-                    diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
+                    if value > 0.1:
+                        diff_24h_ton = resp['price']['diff_24h']['TON'].split('%')[0]
+                        diff_24h_usd = resp['price']['diff_24h']['USD'].split('%')[0]
+                        diff_24h_ton = float(diff_24h_ton.replace('−', '-'))
+                        diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
-                    value_ton = balance * (price_ton := resp['price']['prices']['TON'])
-                    value_usd = balance * price_usd
+                        value_ton = balance * (price_ton := resp['price']['prices']['TON'])
+                        value_usd = balance * price_usd
 
-                    jettons.append({
-                        'jetton_name': resp['jetton']['symbol'],
-                        'balance': balance,
-                        'price_ton': price_ton,
-                        'price_usd': price_usd,
-                        'value_ton': value_ton,
-                        'value_usd': value_usd,
-                        'diff_24h_value': {
-                            'TON': value_ton * diff_24h_ton / 100,
-                            'USD': value_usd * diff_24h_usd / 100
-                        }
-                    })
-        jettons.sort(key=lambda x: x['value_usd'], reverse=True)
-        return {'native': native, 'jettons': jettons}
-    except KeyError:
+                        jettons.append({
+                            'jetton_name': resp['jetton']['symbol'],
+                            'balance': balance,
+                            'price_ton': price_ton,
+                            'price_usd': price_usd,
+                            'value_ton': value_ton,
+                            'value_usd': value_usd,
+                            'diff_24h_value': {
+                                'TON': value_ton * diff_24h_ton / 100,
+                                'USD': value_usd * diff_24h_usd / 100
+                            }
+                        })
+            jettons.sort(key=lambda x: x['value_usd'], reverse=True)
+            return {'native': native, 'jettons': jettons}
+        except KeyError:
+            return
+    else:
         return
 
 

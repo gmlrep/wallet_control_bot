@@ -68,7 +68,7 @@ async def get_text_msg(wallet_address: str) -> str | None:
 
     data = await get_balance_jettons(wallet_address=wallet_address)
 
-    if data is not None:
+    if data:
         text = (
             f"Address - [{wallet_address[:5]}..{wallet_address[len(wallet_address) - 5:len(wallet_address)]}](https://tonscan.org/address/{wallet_address})\n\n"
             f"{round(data['native']['balance'], 2)} 💎 | {round(data['native']['value_usd'], 2)}$\n\n")
