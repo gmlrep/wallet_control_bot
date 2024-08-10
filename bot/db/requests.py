@@ -1,7 +1,4 @@
-import asyncio
-
-from sqlalchemy import select, update, delete, not_
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import select, update, delete, not_, insert
 from sqlalchemy.exc import IntegrityError
 
 from bot.db.database import async_session
