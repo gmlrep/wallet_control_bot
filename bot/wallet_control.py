@@ -5,13 +5,18 @@ import aiohttp
 from bot.db.config import settings
 
 
-async def get_inf_api(url: str, headers: dict) -> dict | None:
+async def get_response(session: aiohttp.ClientSession, url: str, headers: dict):
+    async with session.get(url=url, headers=headers) as response:
+        if response.status != 200:
+            return
+        data = await response.json(encoding='utf8')
+        return data
+
+
+async def get_inf_api(urls: dict, headers: dict):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url=url, headers=headers) as response:
-            if response.status != 200:
-                return
-            data = await response.json(encoding='utf8')
-            return data
+        to_do = [get_response(session, url, headers) for url in urls.values()]
+        return await asyncio.gather(*to_do)
 
 
 async def get_balance_jettons(wallet_address: str) -> dict | None:
@@ -31,9 +36,7 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
     headers = {
         "Authorization": f"Bearer {api_key}"
     }
-
-    corut = [get_inf_api(url, headers) for url in urls.values()]
-    response = await asyncio.gather(*corut)
+    response = await get_inf_api(urls=urls, headers=headers)
     jetton_wallet, ton_wallet, ton_price, = list(response)
 
     if jetton_wallet and ton_wallet and ton_price:
