@@ -5,7 +5,6 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from bot.db.requests import (create_profile, add_address, update_profile_alert,
                              get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
@@ -22,7 +21,7 @@ class Address(StatesGroup):
 
 
 @router.message(Command('start'))
-async def start_handler(message: Message, scheduler: AsyncIOScheduler, state: FSMContext):
+async def start_handler(message: Message, state: FSMContext):
     await state.clear()
     is_registered = await create_profile(user_id=message.from_user.id,
                                          user_fullname=message.from_user.full_name,
@@ -182,6 +181,7 @@ async def send_alert_user(bot: Bot):
     list_user_addr = await get_list_alert_user_addr()
 
     for addr in list_user_addr:
+        await asyncio.sleep(.5)
         text = await get_text_msg(wallet_address=addr[1])
 
         if text is not None:
