@@ -6,10 +6,10 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from bot.db.requests import (create_profile, add_address, update_profile_alert,
-                             get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
+from bot.db.request import (create_profile, add_address, update_profile_alert,
+                            get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
-from bot.wallet_control import get_balance_jettons, check_address
+from bot.utils.ton_api import get_balance_jettons, check_address
 
 router = Router()
 

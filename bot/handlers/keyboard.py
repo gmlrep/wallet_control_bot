@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.db.requests import get_alert_status, get_addr_name
+from bot.db.request import get_alert_status, get_addr_name
 
 
 def kb_start():
@@ -29,7 +29,6 @@ async def kb_list_addr(user_id: int):
         else:
             addr_btn.button(text=f"{addr[:5]}..{addr[len(addr)-5:len(addr)]}",
                             callback_data=f'show_balance:{addr}')
-
     addr_btn.button(text='✏️ Редактировать', callback_data='edit_addr_list')
     addr_btn.button(text="◀️ Назад", callback_data='back')
     addr_btn.adjust(1)
@@ -46,7 +45,6 @@ async def kb_list_edit_delete(user_id: int):
         else:
             addr_btn.button(text=f"{addr[:5]}..{addr[len(addr)-5:len(addr)]}",
                             callback_data=f'show_balance:{addr}')
-
         addr_btn.button(text='✏️', callback_data=f'edit_address:{addr}')
         addr_btn.button(text='❌', callback_data=f'delete_address:{addr}')
     addr_btn.button(text="◀️ Назад", callback_data='back')
