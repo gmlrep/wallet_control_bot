@@ -29,7 +29,7 @@
 
 ### Системные требования:
 <div>
-<img src="https://img.shields.io/badge/Python-3.9+-blue">
+<img src="https://img.shields.io/badge/Python-3.10+-blue">
 <img src="https://img.shields.io/badge/Linux/Windows-blue">
 </div>
 
