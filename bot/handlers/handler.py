@@ -90,7 +90,8 @@ async def get_text_msg(wallet_address: str) -> str | None:
             text += ''.join(f"🟢 {round(total_diff_24_ton, 2)} 💎 | +{round(total_dff_24h_usd, 2)}$\n\n")
         else:
             text += ''.join(f"🔴 {round(total_diff_24_ton, 2)} 💎 | {round(total_dff_24h_usd, 2)}$\n\n")
-
+        if data['nft']:
+            text += ''.join(f"NFT {data['nft']['ton']} 💎 | {round(data['nft']['usdt'], 2)}$\n\n")
         text += ''.join(f"💰 {round(total_ton, 2)} 💎 | {round(total_usd, 2)}$")
         return text
 
