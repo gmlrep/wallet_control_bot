@@ -5,7 +5,7 @@ import aiohttp
 from bot.db.config import settings
 
 
-async def get_response(session: aiohttp.ClientSession, url: str, headers: dict):
+async def get_response(session: aiohttp.ClientSession, url: str, headers: dict) -> dict | None:
     async with session.get(url=url, headers=headers) as response:
         if response.status != 200:
             return
@@ -91,13 +91,12 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
         return
 
 
-async def check_address(address: str) -> bool:
+async def check_address(address: str) -> bool | None:
     url = f'https://tonapi.io/v2/address/{address}/parse'
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url=url) as response:
             status = response.status
             if status != 200:
-                return False
-            else:
-                return True
+                return
+            return True
