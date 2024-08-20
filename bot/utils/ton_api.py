@@ -45,7 +45,6 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
 
     if not jetton_wallet or not ton_wallet or not ton_price:
         return
-
     balance_ton = int(ton_wallet['balance']) / 1000000000
     price_ton = ton_price['rates']['TON']['prices']['USD']
 
@@ -75,13 +74,13 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
                     diff_24h_ton = float(diff_24h_ton.replace('−', '-'))
                     diff_24h_usd = float(diff_24h_usd.replace('−', '-'))
 
-                    value_ton = balance * (price_ton := resp['price']['prices']['TON'])
+                    value_ton = balance * (ton_price := resp['price']['prices']['TON'])
                     value_usd = balance * price_usd
 
                     jettons.append({
                         'jetton_name': resp['jetton']['symbol'],
                         'balance': balance,
-                        'price_ton': price_ton,
+                        'price_ton': ton_price,
                         'price_usd': price_usd,
                         'value_ton': value_ton,
                         'value_usd': value_usd,
@@ -91,9 +90,9 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
                         }
                     })
         jettons.sort(key=lambda x: x['value_usd'], reverse=True)
-        nft = get_nft_balance(addr=wallet_address)
+        nft, qt_nft = await get_nft_balance(addr=wallet_address)
         if nft != 0:
-            nft = {'ton': nft, 'usdt': nft * price_ton * 10000}
+            nft = {'ton': nft, 'usdt': nft * price_ton, 'quantity': qt_nft}
         else:
             nft = None
         return {'native': native, 'jettons': jettons, 'nft': nft}
@@ -112,15 +111,17 @@ async def check_address(address: str) -> bool | None:
             return True
 
 
-def get_nfts_from_acc(addr: str):
+async def get_nfts_from_acc(addr: str):
     url = f'https://tonapi.io/v2/accounts/{addr}/nfts'
     param = {
         'limit': 1000,
-        'offset': 0
+        'offset': 0,
+        'indirect_ownership': 'true'
     }
 
-    data = requests.get(url=url, params=param)
-    data = data.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, params=param) as response:
+            data = await response.json()
     data = data['nft_items']
     nft_list = []
     for nft in data:
@@ -129,13 +130,14 @@ def get_nfts_from_acc(addr: str):
     return nft_list
 
 
-def get_nft_floor_price(addr: str) -> float | None:
+async def get_nft_floor_price(addr: str) -> float | None:
 
     url = f'https://getgems.io/collection/{addr}'
     headers = Headers(browser="chrome", os="win", headers=True)
-    html_index = requests.get(url=url, headers=headers.generate())
-
-    data = BeautifulSoup(html_index.text, 'html.parser')
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers.generate()) as response:
+            html_index = await response.text()
+    data = BeautifulSoup(html_index, 'html.parser')
     props = data.find(id='__NEXT_DATA__').text
     props = json.loads(props)
     props = props['props']['pageProps']['gqlCache']['ROOT_QUERY']['alphaNftCollectionStats({"address":"' + addr + '"})']['floorPrice']
@@ -147,12 +149,11 @@ def get_nft_floor_price(addr: str) -> float | None:
     return props
 
 
-def get_nft_balance(addr: str):
-    nfts = get_nfts_from_acc(addr=addr)
-    sum = 0
+async def get_nft_balance(addr: str):
+    nfts = await get_nfts_from_acc(addr=addr)
+    cor = []
     for nft in nfts:
-        sum += get_nft_floor_price(addr=nft)
-    return sum
-
-
-# print(get_nft_balance(addr='UQCq_TkDcTyDJFDQSNoKljOXdejDKV-s-WIXi0xGHBeciiRo'))
+        cor.append(get_nft_floor_price(addr=nft))
+    prices = await asyncio.gather(*cor)
+    sum_ = sum(prices)
+    return sum_, len(nfts)
