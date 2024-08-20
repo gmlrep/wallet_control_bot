@@ -90,6 +90,7 @@ async def get_balance_jettons(wallet_address: str) -> dict | None:
                         }
                     })
         jettons.sort(key=lambda x: x['value_usd'], reverse=True)
+
         nft, qt_nft = await get_nft_balance(addr=wallet_address)
         if nft != 0:
             nft = {'ton': nft, 'usdt': nft * price_ton, 'quantity': qt_nft}
