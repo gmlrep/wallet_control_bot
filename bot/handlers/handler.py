@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from bot.db.request import (create_profile, add_address, update_profile_alert,
                             get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
-from bot.utils.ton_api import get_balance_jettons, check_address
+from bot.utils.ton_api import TonApi
 
 router = Router()
 
@@ -41,8 +41,8 @@ async def add_wallet(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text, Address.address)
-async def set_address(message: Message, state: FSMContext):
-    if await check_address(address=message.text):
+async def set_address(message: Message, state: FSMContext, ton: TonApi):
+    if await ton.check_address(address=message.text):
         await add_address(user_id=message.from_user.id, address=message.text)
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
         await state.clear()
@@ -57,15 +57,15 @@ async def get_list_addr(callback: CallbackQuery):
     await callback.answer()
 
 
-async def get_text_msg(wallet_address: str) -> str | None:
+async def get_text_msg(wallet_address: str, ton: TonApi) -> str | None:
     """
     Generate text with description of wallet for telegram
 
     :param wallet_address: address of wallet on ton blockchain
+    :param ton: object of TonApi class
     :return: text for send on telegram :class:`str`
     """
-
-    data = await get_balance_jettons(wallet_address=wallet_address)
+    data = await ton.balance_jettons(wallet_address=wallet_address)
 
     if data:
         text = (
@@ -99,9 +99,9 @@ async def get_text_msg(wallet_address: str) -> str | None:
 
 
 @router.callback_query(F.data.startswith('show_balance'))
-async def show_balance(callback: CallbackQuery):
+async def show_balance(callback: CallbackQuery, ton: TonApi):
     wallet_address = callback.data.split(':')[1]
-    text = await get_text_msg(wallet_address=wallet_address)
+    text = await get_text_msg(wallet_address=wallet_address, ton=ton)
     if text is None:
         await callback.message.answer(text='Что то пошло не так. Попробуйте еще раз.')
     else:
@@ -124,9 +124,9 @@ async def quick_balance(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text, Address.single_view_address)
-async def set_address(message: Message, state: FSMContext):
-    if await check_address(address=message.text):
-        text = await get_text_msg(wallet_address=message.text)
+async def set_address(message: Message, state: FSMContext, ton: TonApi):
+    if await ton.check_address(address=message.text):
+        text = await get_text_msg(wallet_address=message.text, ton=ton)
         if text is None:
             await message.answer(text='Что то пошло не так. Попробуйте еще раз.')
         else:

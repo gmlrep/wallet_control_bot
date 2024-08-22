@@ -8,6 +8,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.handlers.handler import router, send_alert_user
 from bot.middleware.apscheduler_middleware import SchedulerMiddleware
 from bot.db.config import settings
+from bot.middleware.ton_midlware import TonMiddleware
+from bot.utils.ton_api import TonApi
 
 
 async def main():
@@ -23,7 +25,9 @@ async def main():
     dp.include_router(router)
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+    ton = TonApi(api_key=settings.api_token)
 
+    dp.update.middleware.register(TonMiddleware(ton))
     dp.update.middleware.register(SchedulerMiddleware(scheduler))
 
     scheduler.start()
