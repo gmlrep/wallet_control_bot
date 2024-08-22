@@ -6,10 +6,10 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from bot.db.request import (create_profile, add_address, update_profile_alert,
-                            get_list_alert_user_addr, delete_address_by_user_id, update_name_addr)
+# from bot.db.crud import get_list_alert_user_addr
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.utils.ton_api import TonApi
+from bot.services.db_service import Database
 
 router = Router()
 
@@ -21,12 +21,12 @@ class Address(StatesGroup):
 
 
 @router.message(Command('start'))
-async def start_handler(message: Message, state: FSMContext):
+async def start_handler(message: Message, state: FSMContext, db: Database):
     await state.clear()
-    is_registered = await create_profile(user_id=message.from_user.id,
-                                         user_fullname=message.from_user.full_name,
-                                         username=message.from_user.username)
-    if is_registered is False:
+    register = await db.add_user(user_id=message.from_user.id,
+                                 user_fullname=message.from_user.full_name,
+                                 username=message.from_user.username)
+    if register:
         await message.answer('Этот бот может отслеживать балансы кошельков и отправлять ежедневные отчеты по балансу. '
                              'Для начала необходимо добавить кошелек для отслеживания', reply_markup=kb_start())
     else:
@@ -41,9 +41,9 @@ async def add_wallet(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text, Address.address)
-async def set_address(message: Message, state: FSMContext, ton: TonApi):
+async def set_address(message: Message, state: FSMContext, ton: TonApi, db: Database):
     if await ton.check_address(address=message.text):
-        await add_address(user_id=message.from_user.id, address=message.text)
+        await db.add_address(user_id=message.from_user.id, address=message.text)
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
         await state.clear()
     else:
@@ -51,9 +51,10 @@ async def set_address(message: Message, state: FSMContext, ton: TonApi):
 
 
 @router.callback_query(F.data == 'list_addr')
-async def get_list_addr(callback: CallbackQuery):
+async def get_list_addr(callback: CallbackQuery, db: Database):
     await callback.message.edit_text(text='Выберите нужный адрес',
-                                     reply_markup=await kb_list_addr(user_id=callback.from_user.id))
+                                     reply_markup=await kb_list_addr(user_id=callback.from_user.id,
+                                                                     db=db))
     await callback.answer()
 
 
@@ -69,7 +70,8 @@ async def get_text_msg(wallet_address: str, ton: TonApi) -> str | None:
 
     if data:
         text = (
-            f"Address - [{wallet_address[:5]}..{wallet_address[len(wallet_address) - 5:len(wallet_address)]}](https://tonscan.org/address/{wallet_address})\n\n"
+            f"Address - [{wallet_address[:5]}..{wallet_address[len(wallet_address) - 5:len(wallet_address)]}]"
+            f"(https://tonscan.org/address/{wallet_address})\n\n"
             f"{round(data['native']['balance'], 2)} 💎 | {round(data['native']['value_usd'], 2)}$\n\n")
 
         total_ton = data['native']['balance']
@@ -93,8 +95,11 @@ async def get_text_msg(wallet_address: str, ton: TonApi) -> str | None:
         text += ''.join(f"💰 {round(total_ton, 2)} 💎 | {round(total_usd, 2)}$\n\n")
         if data['nft']:
             text += ''.join('------------------------------\n')
-            text += ''.join(f"NFT - {data['nft']['quantity']} 💰 {data['nft']['ton']} 💎 | {round(data['nft']['usdt'], 2)}$\n\n")
-            text += ''.join(f"💰 {round(total_ton + data['nft']['ton'], 2)} 💎 | {round(total_usd + data['nft']['usdt'], 2)}$")
+            text += ''.join(
+                f"NFT - {data['nft']['quantity']} "
+                f"💰 {round(data['nft']['ton'], 2)} 💎 | {round(data['nft']['usdt'], 2)}$\n\n")
+            text += ''.join(
+                f"💰 {round(total_ton + data['nft']['ton'], 2)} 💎 | {round(total_usd + data['nft']['usdt'], 2)}$")
         return text
 
 
@@ -111,8 +116,9 @@ async def show_balance(callback: CallbackQuery, ton: TonApi):
 
 
 @router.callback_query(F.data == 'edit_addr_list')
-async def edit_list_addr(callback: CallbackQuery):
-    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id))
+async def edit_list_addr(callback: CallbackQuery, db: Database):
+    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id,
+                                                                                    db=db))
     await callback.answer()
 
 
@@ -146,52 +152,60 @@ async def delete_address(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text, Address.addr_name)
-async def set_address(message: Message, state: FSMContext):
+async def set_address(message: Message, state: FSMContext, db: Database):
     data = await state.get_data()
-    await update_name_addr(user_id=message.from_user.id, addr_name=message.text, address=data['address'])
-    await message.answer(text='Выберите нужный адрес', reply_markup=await kb_list_addr(user_id=message.from_user.id))
+    await db.update_name_addr(name=message.text, user_id=message.from_user.id, address=data['address'])
+    await message.answer(text='Выберите нужный адрес',
+                         reply_markup=await kb_list_addr(user_id=message.from_user.id, db=db))
     await state.clear()
 
 
 @router.callback_query(F.data.startswith('delete_address'))
-async def delete_address(callback: CallbackQuery):
+async def delete_address(callback: CallbackQuery, db: Database):
     address = callback.data.split(':')[1]
-    await delete_address_by_user_id(user_id=callback.from_user.id, address=address)
-    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id))
+    await db.delete_address(user_id=callback.from_user.id, address=address)
+    await callback.message.edit_reply_markup(reply_markup=await kb_list_edit_delete(user_id=callback.from_user.id,
+                                                                                    db=db))
 
 
 @router.callback_query(F.data == 'settings')
-async def setting_handlers(callback: CallbackQuery):
+async def setting_handlers(callback: CallbackQuery, db: Database):
     await callback.message.edit_text(text='Настройки',
-                                     reply_markup=await kb_settings(user_id=callback.from_user.id))
+                                     reply_markup=await kb_settings(user_id=callback.from_user.id, db=db))
     await callback.answer()
 
 
 @router.callback_query(F.data == 'alert')
-async def set_alert(callback: CallbackQuery):
-    await update_profile_alert(user_id=callback.from_user.id)
-    await callback.message.edit_reply_markup(reply_markup=await kb_settings(user_id=callback.from_user.id))
+async def set_alert(callback: CallbackQuery, db: Database):
+    await db.update_alert(user_id=callback.from_user.id)
+    await callback.message.edit_reply_markup(reply_markup=await kb_settings(user_id=callback.from_user.id, db=db))
     await callback.answer()
 
 
 @router.callback_query(F.data == 'back')
 async def back_to_main(callback: CallbackQuery):
-    await callback.message.edit_text(text='Главное меню', reply_markup=kb_menu())
+    await callback.message.edit_text(text='Главное меню',
+                                     reply_markup=kb_menu())
     await callback.answer()
 
 
-async def send_alert_user(bot: Bot):
-    list_user_addr = await get_list_alert_user_addr()
+async def send_alert_user(bot: Bot, ton: TonApi, db: Database):
+    list_user_addr = await db.find_addr_alert_user()
 
     for addr in list_user_addr:
         await asyncio.sleep(.5)
-        text = await get_text_msg(wallet_address=addr[1])
+        text = await get_text_msg(wallet_address=addr[1],
+                                  ton=ton)
 
         if text is not None:
-            await bot.send_message(chat_id=addr[0], text=text,
-                                   disable_web_page_preview=True, parse_mode="Markdown")
+            await bot.send_message(chat_id=addr[0],
+                                   text=text,
+                                   disable_web_page_preview=True,
+                                   parse_mode="Markdown")
         else:
             await asyncio.sleep(1)
-            text = await get_text_msg(wallet_address=addr)
-            await bot.send_message(chat_id=addr[0], text=text,
-                                   disable_web_page_preview=True, parse_mode="Markdown")
+            text = await get_text_msg(wallet_address=addr, ton=ton)
+            await bot.send_message(chat_id=addr[0],
+                                   text=text,
+                                   disable_web_page_preview=True,
+                                   parse_mode="Markdown")
