@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-# from bot.db.crud import get_list_alert_user_addr
 from bot.handlers.keyboard import kb_start, kb_menu, kb_list_addr, kb_settings, kb_list_edit_delete
 from bot.utils.ton_api import TonApi
 from bot.services.db_service import Database
