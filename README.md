@@ -58,7 +58,7 @@ python3 -m bot
 3. Скопируйте (или создайте симлинк) файла службы в каталог `/etc/systemd/system/`;
 4. Активируйте сервис и запустите его:
 ```bash
-sudo systemctl enable wallet_control_bot --now
+sudo systemctl enable wallet_control_bot
 ```
 5. Проверьте, что сервис запустился:
 ```bash
