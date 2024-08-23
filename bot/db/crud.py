@@ -1,9 +1,6 @@
-import asyncio
-
 from sqlalchemy import select, update, delete, insert
 
 from bot.db.database import async_session
-from bot.db.models import User, Address
 
 
 class CRUD:

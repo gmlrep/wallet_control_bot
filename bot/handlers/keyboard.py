@@ -22,7 +22,6 @@ def kb_menu():
 
 async def kb_list_addr(user_id: int, db: Database):
     address = await db.find_address(user_id=user_id)
-    # address = await get_addr_name(user_id=user_id)
     addr_btn = InlineKeyboardBuilder()
     for addr, name in address.items():
         if name:
@@ -38,7 +37,6 @@ async def kb_list_addr(user_id: int, db: Database):
 
 async def kb_list_edit_delete(user_id: int, db: Database):
     address = await db.find_address(user_id=user_id)
-    # address = await get_addr_name(user_id=user_id)
     addr_btn = InlineKeyboardBuilder()
 
     for addr, name in address.items():
@@ -57,7 +55,6 @@ async def kb_list_edit_delete(user_id: int, db: Database):
 async def kb_settings(user_id: int, db: Database):
     settings = InlineKeyboardBuilder()
     data = await db.find_user_status(user_id=user_id)
-    # data = await get_alert_status(user_id=user_id)
     if data:
         settings.button(text="✅ Отчет", callback_data='alert')
     else:
