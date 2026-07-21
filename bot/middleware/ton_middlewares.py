@@ -2,7 +2,6 @@ from typing import Dict, Any, Callable, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.utils.ton_api import TonApi
 
 

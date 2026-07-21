@@ -14,7 +14,10 @@ class Settings(BaseSettings):
 
     api_token: str = os.getenv('API_KEY')
 
-    db_url: str = f"sqlite+aiosqlite:///{BASE_DIR}/db/database.db"
+    @property
+    def db_url(self) -> str:
+        return f"sqlite+aiosqlite:///{BASE_DIR}/db/database.db"
+
     echo: bool = False
 
     time_scheduler: str = os.getenv('TIME')

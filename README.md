@@ -35,20 +35,33 @@
 
 ### Протестировать на своем локальном сервере (Linux):
 1. Клонируйте репозиторий;
-2. Перейдите (`cd`) в клонированный каталог и создайте виртуальное окружение Python (Virtual environment, venv);
-3. Активируйте venv и установите pip и все зависимости из `requirements.txt`;
+2. Перейдите (`cd`) в клонированный каталог и установите `uv`;
 ```bash
-sudo apt install python3-pip
-pip install -r requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+3. Создайте виртуальное окружение и установите зависимости:
+```bash
+uv sync
 ```
 4. Совершите миграцию с помощью Alembic:
 ```bash
-alembic upgrade head
+uv run alembic upgrade head
 ```
 5. Скопируйте `.env-example` под именем `.env`, откройте его и заполните переменные;
-6. Внутри активированного venv:
+6. Запустите бота:
 ```bash
-python3 -m bot
+uv run python -m bot
+```
+
+### Тесты
+Запустить тесты локально:
+```bash
+uv run pytest
+```
+
+При необходимости можно экспортировать `requirements.txt` из `uv`-lock файла:
+```bash
+uv export --format requirements-txt --no-hashes --output-file requirements.txt
 ```
 
 ### Через Systemd

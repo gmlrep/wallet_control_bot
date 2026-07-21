@@ -1,6 +1,8 @@
 /venv/
+/.venv/
 /.idea/
 __pycache__/
+/.pytest_cache/
 /.env
 bot/db/database.db
 bot/data/

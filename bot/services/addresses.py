@@ -1,4 +1,5 @@
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.testing.plugin.plugin_base import logging
 
 from bot.db.crud import CRUD
 from bot.db.models import Address
@@ -12,6 +13,7 @@ class AddressService:
     async def add_address(self, **data):
         try:
             await self.address_repo.create(data=data)
+            logging.info('User is registered')
         except IntegrityError:
             return
 

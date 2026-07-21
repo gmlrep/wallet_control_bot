@@ -27,7 +27,7 @@ async def kb_list_addr(user_id: int, db: Database):
         if name:
             addr_btn.button(text=name, callback_data=f'show_balance:{addr}')
         else:
-            addr_btn.button(text=f"{addr[:5]}..{addr[len(addr)-5:len(addr)]}",
+            addr_btn.button(text=f"{addr[:5]}..{addr[len(addr) - 5:len(addr)]}",
                             callback_data=f'show_balance:{addr}')
     addr_btn.button(text='✏️ Редактировать', callback_data='edit_addr_list')
     addr_btn.button(text="◀️ Назад", callback_data='back')
@@ -43,7 +43,7 @@ async def kb_list_edit_delete(user_id: int, db: Database):
         if name:
             addr_btn.button(text=name, callback_data=f'show_balance:{addr}')
         else:
-            addr_btn.button(text=f"{addr[:5]}..{addr[len(addr)-5:len(addr)]}",
+            addr_btn.button(text=f"{addr[:5]}..{addr[len(addr) - 5:len(addr)]}",
                             callback_data=f'show_balance:{addr}')
         addr_btn.button(text='✏️', callback_data=f'edit_address:{addr}')
         addr_btn.button(text='❌', callback_data=f'delete_address:{addr}')

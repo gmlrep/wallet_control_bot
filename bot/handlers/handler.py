@@ -40,7 +40,7 @@ async def add_wallet(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text, Address.address)
-async def set_address(message: Message, state: FSMContext, ton: TonApi, db: Database):
+async def add_address(message: Message, state: FSMContext, ton: TonApi, db: Database):
     if await ton.check_address(address=message.text):
         await db.add_address(user_id=message.from_user.id, address=message.text)
         await message.answer(text='Кошелек успешно добавлен', reply_markup=kb_menu())
@@ -122,14 +122,14 @@ async def edit_list_addr(callback: CallbackQuery, db: Database):
 
 
 @router.callback_query(F.data == 'single_view_balance')
-async def quick_balance(callback: CallbackQuery, state: FSMContext):
+async def view_balance(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Address.single_view_address)
     await callback.message.answer(text='Введите адрес кошелька, баланс которого хотите посмотреть в сети TON.')
     await callback.answer()
 
 
 @router.message(F.text, Address.single_view_address)
-async def set_address(message: Message, state: FSMContext, ton: TonApi):
+async def quick_balance(message: Message, state: FSMContext, ton: TonApi):
     if await ton.check_address(address=message.text):
         text = await get_text_msg(wallet_address=message.text, ton=ton)
         if text is None:
@@ -143,7 +143,7 @@ async def set_address(message: Message, state: FSMContext, ton: TonApi):
 
 
 @router.callback_query(F.data.startswith('edit_address'))
-async def delete_address(callback: CallbackQuery, state: FSMContext):
+async def edit_address(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text='Введите название кошелька')
     await state.update_data(address=callback.data.split(':')[1])
     await state.set_state(Address.addr_name)

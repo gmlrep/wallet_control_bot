@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 
 from bs4 import BeautifulSoup
 from fake_headers import Headers
@@ -53,6 +54,7 @@ async def prepare_data(jetton_wallet, ton_wallet, ton_price):
 
         return {'native': native, 'jettons': jettons}
     except KeyError:
+        logging.error('Something wrong with argument function.')
         return None
 
 
@@ -87,6 +89,7 @@ class TonApi:
         jetton_wallet, ton_wallet, ton_price = list(await asyncio.gather(*to_do))
 
         if not jetton_wallet or not ton_wallet or not ton_price:
+            logging.error('Invalid response data')
             return
 
         jettons = await prepare_data(jetton_wallet, ton_wallet, ton_price)
@@ -134,7 +137,7 @@ class TonApi:
                     return await response.text()
                 if response_type == 'status_code':
                     return True
-                # raise
+                logging.error('Unsupported str for argument response_type. Only support: json, text, status_code')
 
     async def _nfts_info(
             self,

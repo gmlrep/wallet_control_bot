@@ -1,0 +1,33 @@
+[project]
+name = "wallet-control-bot"
+version = "0.1.0"
+description = "Telegram bot for tracking TON wallets."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp",
+    "aiogram",
+    "aiosqlite",
+    "alembic",
+    "apscheduler",
+    "beautifulsoup4",
+    "fake-headers",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "sqlalchemy",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.uv]
+package = false
